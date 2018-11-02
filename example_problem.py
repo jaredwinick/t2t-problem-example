@@ -1,12 +1,41 @@
 from tensor2tensor.data_generators import problem
 from tensor2tensor.data_generators import text_problems
+from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.layers import common_hparams
 from tensor2tensor.utils import registry
 
+import tensorflow as tf
+
 import numpy as np
+import collections
+import os
+import urllib.request
+
+def _build_vocab(filename, vocab_path):
+    data = _read_words(filename)
+    counter = collections.Counter(data)
+    count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
+    words, _ = list(zip(*count_pairs))
+    #words = words[:vocab_size]
+    with open(vocab_path, "w") as f:
+        f.write("\n".join(words))
+
+    return text_encoder.TokenTextEncoder(vocab_path)
+
+def _read_words(filename):
+  """Reads tokens from a sequencee file. Returns list of tokens"""
+  with tf.gfile.GFile(filename, "r") as f:
+    return f.read().replace("\n", " ").replace("|", " ").split()
+
+def _download(tmp_dir):
+    path, _ = urllib.request.urlretrieve(SEQUENCE_FILE_URL, os.path.join(tmp_dir, SEQUENCE_FILE_NAME))
+    return path
+    
+SEQUENCE_FILE_URL = 'https://storage.googleapis.com/js-code/sequences_10.txt'
+SEQUENCE_FILE_NAME = "sequences_10.txt"
 
 @registry.register_problem
-class Parabola(text_problems.Text2TextProblem):
+class Tracks(text_problems.Text2TextProblem):
 
     @property
     def approx_vocab_size(self):
@@ -15,6 +44,14 @@ class Parabola(text_problems.Text2TextProblem):
     @property
     def is_generate_per_split(self):
         return False
+
+    @property
+    def vocab_filename(self):
+        return "vocab.tracks"
+
+    @property
+    def vocab_type(self):
+        return text_problems.VocabType.TOKEN
     
     @property
     def dataset_splits(self):
@@ -26,28 +63,25 @@ class Parabola(text_problems.Text2TextProblem):
             "shards": 1,
         }]
 
-    def parabola_function(self, x): 
-        y = .05 * ((x - 100)*(x - 100))
-        return y
-    
-    def format(self, x, y):
-        return f'A{int(x)}{int(y)}'
-
     def generate_samples(self, data_dir, tmp_dir, dataset_split):
 
-        for i in range(1000):
-            x_start = np.random.randint(200)
-            inputs = []
-            targets = []
-            for x in range(x_start, x_start + 10):
-                y = self.parabola_function(x)
-                inputs.append(self.format(x, y))
-            for x in range(x_start + 10, x_start + 20):
-                y = self.parabola_function(x)
-                targets.append(self.format(x, y))
-            print(inputs)
-            print(targets)
-            yield {
-                "inputs": ' '.join(inputs),
-                "targets": ' '.join(targets)
-            }
+        sequence_file_path = _download(tmp_dir)
+        print("Downloaded to: " + sequence_file_path)
+        
+        file = open(sequence_file_path, 'r')
+        lines = file.readlines()
+        
+        vocab_path = os.path.join(data_dir, self.vocab_filename)
+        _build_vocab(sequence_file_path, vocab_path)
+
+        def _generate_samples():
+            for line in lines:
+                fields = line.split("|")
+                yield {
+                    "inputs": fields[0],
+                    "targets": fields[1]
+                }
+            
+        return _generate_samples()
+
+        

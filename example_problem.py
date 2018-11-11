@@ -10,6 +10,7 @@ import numpy as np
 import collections
 import os
 import urllib.request
+import gzip
 
 def _build_vocab(filename, vocab_path):
     data = _read_words(filename)
@@ -24,22 +25,25 @@ def _build_vocab(filename, vocab_path):
 
 def _read_words(filename):
   """Reads tokens from a sequencee file. Returns list of tokens"""
-  with tf.gfile.GFile(filename, "r") as f:
-    return f.read().replace("\n", " ").replace("|", " ").split()
+  file = gzip.open(filename, mode='r')
+  contents = file.read().decode('utf-8')
+  return contents.replace("\n", " ").replace("|", " ").split()
+  #with gzip.open(filename, mode="r") as f:
+  #  return f.read().replace("\n", " ").replace("|", " ").split()
 
 def _download(tmp_dir):
     path, _ = urllib.request.urlretrieve(SEQUENCE_FILE_URL, os.path.join(tmp_dir, SEQUENCE_FILE_NAME))
     return path
     
-SEQUENCE_FILE_URL = 'https://storage.googleapis.com/js-code/sequences_10.txt'
-SEQUENCE_FILE_NAME = "sequences_10.txt"
+SEQUENCE_FILE_URL = 'https://storage.googleapis.com/js-code/sequences_15_week.txt.gz'
+SEQUENCE_FILE_NAME = "sequences_15_week.txt.gz"
 
 @registry.register_problem
 class Tracks(text_problems.Text2TextProblem):
 
     @property
     def approx_vocab_size(self):
-        return 1000
+        return 32000
 
     @property
     def is_generate_per_split(self):
@@ -68,8 +72,9 @@ class Tracks(text_problems.Text2TextProblem):
         sequence_file_path = _download(tmp_dir)
         print("Downloaded to: " + sequence_file_path)
         
-        file = open(sequence_file_path, 'r')
-        lines = file.readlines()
+        file = gzip.open(sequence_file_path, 'r')
+        lines = file.read().decode('utf-8').split('\n')
+        print(len(lines))
         
         vocab_path = os.path.join(data_dir, self.vocab_filename)
         _build_vocab(sequence_file_path, vocab_path)
@@ -77,10 +82,11 @@ class Tracks(text_problems.Text2TextProblem):
         def _generate_samples():
             for line in lines:
                 fields = line.split("|")
-                yield {
-                    "inputs": fields[0],
-                    "targets": fields[1]
-                }
+                if (len(fields) == 2):
+                    yield {
+                        "inputs": fields[0],
+                        "targets": fields[1]
+                    }
             
         return _generate_samples()
 

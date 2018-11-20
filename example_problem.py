@@ -35,8 +35,8 @@ def _download(tmp_dir):
     path, _ = urllib.request.urlretrieve(SEQUENCE_FILE_URL, os.path.join(tmp_dir, SEQUENCE_FILE_NAME))
     return path
     
-SEQUENCE_FILE_URL = 'https://storage.googleapis.com/js-code/sequences_15_week.txt.gz'
-SEQUENCE_FILE_NAME = "sequences_15_week.txt.gz"
+SEQUENCE_FILE_URL = 'https://storage.googleapis.com/js-code/sequences_15_week_eos.txt.gz'
+SEQUENCE_FILE_NAME = "sequences_15_week_eos.txt.gz"
 
 @registry.register_problem
 class Tracks(text_problems.Text2TextProblem):

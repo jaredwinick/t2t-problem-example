@@ -1,2 +1,2 @@
 from . import example_problem
-from . import d3_code
+from . import d3_code_problem

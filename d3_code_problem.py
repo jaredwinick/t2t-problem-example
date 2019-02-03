@@ -41,14 +41,14 @@ class D3Code(text_problems.Text2TextProblem):
         }]
 
     def generate_samples(self, data_dir, tmp_dir, dataset_split):
-        del data_dir
-        del tmp_dir
-        del dataset_split
+        #del data_dir
+        #del tmp_dir
+        #del dataset_split
 
         code_file_path = _download(tmp_dir)
         print("Downloaded to: " + code_file_path)
         
-        file = gzip.open(sequence_file_path, 'r')
+        file = gzip.open(code_file_path, 'r')
         lines = file.read().decode('utf-8').split('\n')
         print(len(lines))
         

@@ -20,7 +20,7 @@ CODE_FILE_URL = 'https://storage.googleapis.com/js-code/d3SourceFiles.txt.gz'
 CODE_FILE_NAME = "d3SourceFiles.txt.gz"
 
 @registry.register_problem
-class D3Code(text_problems.Text2TextProblem):
+class D3Code(text_problems.Text2SelfProblem):
 
     @property
     def is_generate_per_split(self):
@@ -58,7 +58,7 @@ class D3Code(text_problems.Text2TextProblem):
         for line in lines:
             if prev_line and line:
                 yield {
-                    "inputs": prev_line,
+                    #"inputs": prev_line,
                     "targets": line,
                 }
                 ex_count += 1
